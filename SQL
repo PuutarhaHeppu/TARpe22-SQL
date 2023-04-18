@@ -429,43 +429,43 @@ add LastName nvarchar(30)
 select * from Employees
 --- uuendame koodiga v''rtuseid
 update Employees
-set FirstName = 'Tom', MiddleName = 'Nick', LastName = 'Jones'
+set Name = 'Tom', MiddleName = 'Nick', LastName = 'Jones'
 where Id = 1
 
 update Employees
-set FirstName = 'Pam', MiddleName = NULL, LastName = 'Anderson'
+set Name = 'Pam', MiddleName = NULL, LastName = 'Anderson'
 where Id = 2
 
 update Employees
-set FirstName = 'John', MiddleName = NULL, LastName = NULL
+set Name = 'John', MiddleName = NULL, LastName = NULL
 where Id = 3
 
 update Employees
-set FirstName = 'Sam', MiddleName = NULL, LastName = 'Smith'
+set Name = 'Sam', MiddleName = NULL, LastName = 'Smith'
 where Id = 4
 
 update Employees
-set FirstName = NULL, MiddleName = 'Todd', LastName = 'Someone'
+set Name = NULL, MiddleName = 'Todd', LastName = 'Someone'
 where Id = 5
 
 update Employees
-set FirstName = 'Ben', MiddleName = 'Ten', LastName = 'Sven'
+set Name = 'Ben', MiddleName = 'Ten', LastName = 'Sven'
 where Id = 6
 
 update Employees
-set FirstName = 'Sara', MiddleName = NULL, LastName = 'Connor'
+set Name = 'Sara', MiddleName = NULL, LastName = 'Connor'
 where Id = 7
 
 update Employees
-set FirstName = 'Valarie', MiddleName = 'Balerine', LastName = NULL
+set Name = 'Valarie', MiddleName = 'Balerine', LastName = NULL
 where Id = 8
 
 update Employees
-set FirstName = 'James', MiddleName = '007', LastName = 'Bond'
+set Name = 'James', MiddleName = '007', LastName = 'Bond'
 where Id = 9
 
 update Employees
-set FirstName = NULL, MiddleName = NULL, LastName = 'Crowe'
+set Name = NULL, MiddleName = NULL, LastName = 'Crowe'
 where Id = 10
 
 select * from Employees
@@ -520,7 +520,7 @@ order by Name
 --- stored procedure
 create procedure spGetEmployees
 as begin
-	select FirstName, Gender from Employees
+	select Name, Gender from Employees
 end
 
 -- n[[d saab kasutada selle nimelist stored proceduret
@@ -533,7 +533,7 @@ create proc spGetEmployeesByGenderAndDepartment
 @Gender nvarchar(20),
 @DepartmentId int
 as begin
-	select FirstName, Gender, DepartmentId from Employees
+	select Name, Gender, DepartmentId from Employees
 	where Gender = @Gender
 	and DepartmentId = @DepartmentId
 end
@@ -808,3 +808,55 @@ select year('03/31/2020') -- annab stringis oleva aasta nr
 select datename(day, '2023-04-11 11:58:50.900') --- annab stringis oleva päeva nr
 select datename(weekday, '2023-04-11 11:58:50.900') -- annab stringis oleva päeva sõnana
 select datename(month, '2023-04-11 11:58:50.900') -- annab stringis oleva päeva sõnana
+
+--- 5 tund
+create function fnComputerAge(@DOB datetime)
+returns nvarchar(50)
+as begin
+	declare @tempdate datetime, @year int, @months int, @days int
+		select @tempdate = @DOB
+
+		select @year = DATEDIFF(year, @tempdate, getdate()) - case when (MONTH(@DOB) > MONTH(getdate())) or (month(@DOB)) = MONTH(getdate()) and DAY(@DOB) > DAY(getdate()) then 1 else 0 end
+
+		select @tempdate = DATEADD(month, @months, @tempdate)
+
+		select @days = DATEDIFF(DAY, @tempdate, GETDATE())
+
+		declare @Age nvarchar(50)
+		set @Age = CAST(@year as nvarchar(4)) + ' Years ' + CAST(@year as nvarchar(4)) + ' months ' + CAST(@days as nvarchar(4)) + ' Days old '
+
+		return @Age
+end
+
+alter table Employees
+add DateOfBirth datetime
+
+--- saame vaadata kasutajate vanust
+select Id, Name, DateOfBirth, dbo.fnComputerAge(DateOfBirth) as Age from Employees
+
+-- kui kasutame seda funktsioonu, siis saame teada tänase päeva vahe stringis välja toodud kuupäevaga
+select dbo.fnComputerAge('11/11/2010')
+
+--- number peale DateOfBirth muutujat näitab, et mismoodi kuvada DOB
+select Id, Name, DateOfBirth,
+CONVERT(nvarchar, DateOfBirth, 126) as convertedDOB
+from Employees
+
+select Id, Name, LastName + ' - ' + CAST(Id as nvarchar) as [Name-Id] from Employees
+
+
+select CAST(GETDATE() as date) -- tänane kuupäev
+select CONVERT(date, getdate()) -- tänane kuu
+
+-- matemaatilised funktsioonid
+select ABS(-101.5) -- abs on absoluutne number ja tulemuseks saame ilma miinusmärgita tulemuse
+select CEILING(15.2) -- tagastab 16 ja suurendab suurema täisarvu suunas
+select CEILING(-15.2) -- tagastab -15 ja suurendab suurema positiivse täisarvu suunas
+select FLOOR(15.2) -- ümardab negatiivsema numbri poole
+select FLOOR(-15.2) -- ümardab negatiivsema numbri poole
+select POWER(2, 4) -- hakkab korrutama 2*2*2*2, esimene nr on korrutatav number
+select SQUARE(9) -- antud juhul 9 ruudus
+select SQRT(81) -- annab vastuse 9, ruutjuur
+
+select RAND() -- annab suvalise numbri
+select FLOOR(RAND() * 100) -- korrutab sajaga iga suvalise numbri
