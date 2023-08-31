@@ -1,0 +1,168 @@
+drop table HenriEvert
+
+create table HenriEvert
+(
+id int not null primary key,
+Name nvarchar(50),
+DateOfBirth nvarchar(50),
+Gender nvarchar(50),
+DepartmentId int
+)
+
+insert into HenriEvert (id, Name, DateOfBirth, Gender, DepartmentId)
+values (1, 'Sam', '1980-12-30', 'Male', 1)
+insert into HenriEvert (id, Name, DateOfBirth, Gender, DepartmentId)
+values (2, 'Pam', '1982-09-01', 'Female', 2)
+insert into HenriEvert (id, Name, DateOfBirth, Gender, DepartmentId)
+values (3, 'John', '1985-08-22', 'Male', 1)
+insert into HenriEvert (id, Name, DateOfBirth, Gender, DepartmentId)
+values (4, 'Sara', '1979-11-29', 'Female', 3)
+insert into HenriEvert (id, Name, DateOfBirth, Gender, DepartmentId)
+values (5, 'Todd', '1978-11-29', 'Male', 1)
+
+
+select * from henriEvert
+
+
+
+
+
+
+Create Function fn_ILTVF_GetEmployees()
+Returns Table
+as
+Return (Select Id, Name, Cast (DateOfBirth as Date) as DOB From HenriEvert)
+
+select * from fn_ILTVF_GetEmployees()
+
+
+Create Function fn_MSTVF_GetEmployees()
+Returns @Table Table (Id int, Name nvarchar(20), DOB Date)
+as
+Begin
+Insert into @table
+Select Id, Name, Cast(DateOfBirth as Date)
+From HenriEvert
+Return
+End
+
+select * from fn_MSTVF_GetEmployees()
+
+Select * from fn_ILTVF_GetEmployees()
+Select * from fn_MSTVF_GetEmployees()
+
+update fn_ILTVF_GetEmployees() set Name='Sam1' Where id = 1
+
+Create Table [dbo].[tblEmployees]
+(
+[id][int]Primary Key,
+[Name][nvarchar](50) NULL,
+[DateofBirth][datetime]Null,
+[Gender][nvarchar](10) Null,
+[DepartmentId][int]NULL
+)
+
+
+select * from tblEmployees
+
+Insert into tblEmployees values (1, 'Sam', '1980-12-30 00:00:00.000', 'Male',1)
+Insert into tblEmployees values (2, 'Pam', '1982-09-01 12:02:36.260', 'Female',2)
+Insert into tblEmployees values (3,'John', '1985-08-22 12:03:30.370', 'Male',1)
+Insert into tblEmployees values (4, 'Sara', '1979-11-29 12:59:30.670', 'Female',3)
+Insert into tblEmployees values (5, 'Todd', '1978-11-29 12:59:30.670', 'Male',1)
+
+
+
+Create function fn_getEmployeeNameById(@Id int)
+returns nvarchar(20)
+as
+begin
+	Return(Select Name from tblEmployees Where Id = @Id)
+end
+
+Alter Function fn_GetEmployeeNameById(@Id int)
+returns nvarchar(20)
+with Encryption
+as
+Begin
+	Return(Select Name from tblEmployees Where Id=@Id)
+End
+
+sp_helptext fn_GetEmployeeNameById
+
+drop table tblEmployees
+
+
+Alter function fn_getEmployeeNameById(@Id int)
+returns nvarchar(20)
+With schemaBinding
+as
+begin
+	return(Select Name from dbo.tblEmployees Where Id = @Id)
+End
+
+
+
+Create Table #PersonDetails(Id int, Name nvarchar(20))
+
+insert into #PersonDetails values(1, 'Mike')
+insert into #PersonDetails values(1, 'John')
+insert into #PersonDetails values(1, 'Todd')
+
+select * from #PersonDetails
+
+select Name from tempdb..sysobjects
+where Name like '#PersonDetails%'
+
+drop table #PersonDetails
+
+Create Procedure spCreateLocalTempTable
+as
+Begin
+Create Table #PersonDetails (Id int, Name nvarchar(20))
+
+Insert into #PersonDetails Values(1, 'Mike')
+Insert into #PersonDetails Values (2, 'John') 
+Insert into #PersonDetails Values(3, 'Todd')
+
+Select * from #PersonDetails
+End
+
+create table ##EmployeeDetails(Id int, Name nvarchar(20))
+
+
+create table Employees(
+id int,
+name nvarchar(30),
+salary int,
+DateofBirth nvarchar(50),
+Gender nvarchar(30),
+DepartmentId int
+)
+
+drop table Employees
+
+
+insert into Employees(id, Name, salary, DateOfbirth, Gender, DepartmentId)
+values (1, 'Sam', 2500, '1980-12-30', 'Male', 1)
+insert into Employees(id, Name, salary, DateOfbirth, Gender, DepartmentId)
+values (2, 'Pam', 6500, '1982-09-01', 'Female', 2)
+insert into Employees(id, Name, salary, DateOfbirth, Gender, DepartmentId)
+values (3, 'John', 4500, '1985-08-22', 'Male', 1)
+insert into Employees(id, Name, salary, DateOfbirth, Gender, DepartmentId)
+values (4, 'Sara', 5500, '1979-11-29', 'Female', 3)
+insert into Employees(id, Name, salary, DateOfbirth, Gender, DepartmentId)
+values (5, 'Todd', 3100, '1978-11-29', 'Male', 1)
+
+select * from Employees where salary > 5000 and Salary < 7000
+
+
+
+
+create index IX_tblEmployee_Salary
+ON Employees (Salary ASC)
+
+Execute sp_helptext tblEmployee
+
+
+select * from IX_tblemployee_salary
