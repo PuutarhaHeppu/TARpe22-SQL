@@ -1,3 +1,5 @@
+create database tarpe22_6
+
 -- 1 tund
 
 -- kommentaar
@@ -2577,5 +2579,107 @@ end catch
 
 select * from Account
 
--- mõned levinumad probleemid
+--- Mõned levinumad probleemid:
+--- 1. Dirty read e must lugemine
+--- 2. Lost updates e kadunud uuendused
+--- 3. nonreapeatable reads ehk koramatud lugemised
+--- 4. phantom read e fantoom lugemine
 
+--- kõik eelnevad probeemid lahendaks ära, kui lubaksite igal ajal
+--- korraga ühel kasutajal ühe tehingu teha. Selle tulemusel kõik tehingud
+--- satuvad järjekorda ja neil võib tekkida vajadus kaua oodata, enne
+--- kui võimalus tehingut teha saabub.
+
+--- kui lubada samaaegselt koik tehingud ära teha,
+--- siis see omakorda tekitab probleeme
+--- probleemi lahendamiseks pakub MSSQL server erinevaid
+--- tehinguisolatsiooni tasemeid,
+--- et tasakaalustada samaaegsete andemete CRUD(create, read, update ja delete) probleeme:
+
+--- 1. read uncommited e lugemine ei ole teostatud
+--- 2. read commited e lugemine tehtud
+--- 3. repeatable read e korduv lugemine
+--- 4. snapshot e kuvatõmmis
+--- 5. serializable e serialiseerimine
+
+
+--- igale juhtumile tuleb läheneda juhtumipõhiliselt ja
+--- mida vähem valet lugemist tuleb, seda aeglasem
+
+create table Inventory
+(
+Id int identity primary key,
+Product nvarchar(100),
+ItemsInStock int
+)
+
+go
+insert into Inventory values ('iPhone', 10)
+select * from Inventory
+
+-- dirty read näide
+-- 1 server
+-- 1. käsklus
+-- 1 transaction
+begin tran
+update Inventory set ItemsInStock = 9 where Id = 1
+--- kliendile tuleb arve
+waitfor delay '00:00:15'
+--- ebapiisav saldojääk, teeb rollbacki
+rollback transaction
+
+-- 2. käsklus
+-- 2 server
+-- samal ajal tegin uue päringuga akna, kus kohe peale esimest käivitan teise
+
+-- 2 transaction
+set tran isolation level read uncommitted
+select * from Inventory
+where Id = 1
+
+-- 3. käsklus
+-- 1 server
+-- nüüd panen selle käskluse tööle
+select * from Inventory
+(nolock) where Id = 1
+
+-- muutsin esimese käsuga 9 iPhone peale, aga ikka on 10tk
+
+-- lost update problem
+select * from Inventory
+
+set tran isolation level repeatable read 
+-- 1 tran
+begin tran
+declare @ItemsInStock int 
+
+select @ItemsInStock = ItemsInStock
+from Inventory where Id = 1
+
+waitfor delay '00:00:10'
+set @ItemsInStock = @ItemsInStock - 1
+
+update Inventory
+set ItemsInStock = @ItemsInStock where Id = 1
+
+print @ItemsInStock
+commit transaction
+
+
+-- 2 transaction
+-- samal ajal panen teise transactioni tööle
+set tran isolation level repeatable read
+begin tran
+declare @ItemsInStock int
+
+select @ItemsInStock = ItemsInStock
+from Inventory where Id = 1
+
+waitfor delay '00:00:01'
+set @ItemsInStock = @ItemsInStock - 2
+
+update Inventory
+set ItemsInStock = @ItemsInStock where Id = 1
+
+print @ItemsInStock
+commit tran
